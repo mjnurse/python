@@ -1,0 +1,8 @@
+import compress-string as cs
+
+print(cs.uncompress_string(cs.compress_string('m')))
+print(cs.uncompress_string(cs.compress_string('ma')))
+print(cs.uncompress_string(cs.compress_string('mar')))
+print(cs.uncompress_string(cs.compress_string('mart')))
+print(cs.uncompress_string(cs.compress_string('marti')))
+print(cs.uncompress_string(cs.compress_string('martin')))
