@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 A class to create and draw a text table
 

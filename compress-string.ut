@@ -1,4 +1,5 @@
-import compress-string as cs
+import importlib
+cs = importlib.import_module('compress-string')
 
 print(cs.uncompress_string(cs.compress_string('m')))
 print(cs.uncompress_string(cs.compress_string('ma')))

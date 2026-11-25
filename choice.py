@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 A template python script which reads from the console and executes commands
 
@@ -11,7 +12,7 @@ mjnurse.uk - 2019
 
 import os
 import time
-import pysnooper
+#import pysnooper
 
 
 G_TIMER_DEFAULT_ON = False

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Two functions to compress and decompress a string.
 
