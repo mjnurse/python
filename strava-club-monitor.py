@@ -228,6 +228,7 @@ def send_ntfy(
     title: str,
     message: str,
     click_url: str | None = None,
+    actions: list[dict] | None = None,
     tags: list[str] | None = None,
     priority: int = 3,
 ) -> None:
@@ -246,6 +247,8 @@ def send_ntfy(
         payload["tags"] = tags
     if click_url:
         payload["click"] = click_url
+    if actions:
+        payload["actions"] = actions
 
     headers = {}
     token = config.get("ntfy_token", "").strip()
@@ -333,11 +336,15 @@ def has_upcoming_occurrence(event: dict, now_utc: datetime) -> bool:
     return False
 
 
+def event_join_url(club_id: int, event_id: int | str) -> str:
+    return f"https://www.strava.com/clubs/{club_id}/group_events/{event_id}"
+
+
 def format_event_notification(club_id: int, club_name: str, event: dict) -> tuple[str, str, str]:
     event_id = event["id"]
     title_text = event.get("title") or "Untitled Ride"
     notif_title = f"New Strava Ride: {club_name}"
-    click_url = f"https://www.strava.com/clubs/{club_id}/group_events/{event_id}"
+    join_url = event_join_url(club_id, event_id)
 
     lines = [title_text]
 
@@ -349,6 +356,8 @@ def format_event_notification(club_id: int, club_name: str, event: dict) -> tupl
     if address:
         lines.append(f"Start: {address}")
 
+    lines.append(f"Join: {join_url}")
+
     route_id = event.get("route_id")
     if route_id:
         lines.append(f"Route: https://www.strava.com/routes/{route_id}")
@@ -359,7 +368,7 @@ def format_event_notification(club_id: int, club_name: str, event: dict) -> tupl
         lines.append("")
         lines.append(snippet)
 
-    return notif_title, "\n".join(lines), click_url
+    return notif_title, "\n".join(lines), join_url
 
 
 # ---------------------------------------------------------------------------
@@ -650,9 +659,9 @@ def run_list_rides(
             occurrences = event.get("upcoming_occurrences") or []
             when = format_occurrence(occurrences[0]) if occurrences else "Date TBC"
             title = event.get("title") or "Untitled Ride"
-            url = f"https://www.strava.com/clubs/{club_id}/group_events/{event['id']}"
+            url = event_join_url(club_id, event["id"])
             print(f"  {when:<26}  {title}")
-            print(f"  {'':<26}  {url}")
+            print(f"  {'':<26}  Join: {url}")
         print()
 
     return 1 if had_errors else 0
@@ -734,10 +743,12 @@ def run_check(
             if event_id in club_seen:
                 continue
 
+            join_url = event_join_url(club_id, event_id)
             if not effective_seed and has_upcoming_occurrence(event, now_utc):
                 notif_title, notif_body, click_url = format_event_notification(
                     club_id, club_name, event
                 )
+                actions = [{"action": "view", "label": "Join Ride", "url": click_url}]
                 if dry_run:
                     print(f"[DRY RUN] Would alert:\n  Title: {notif_title}\n  URL:   {click_url}")
                     for line in notif_body.splitlines():
@@ -748,6 +759,7 @@ def run_check(
                         title=notif_title,
                         message=notif_body,
                         click_url=click_url,
+                        actions=actions,
                         tags=["bike"],
                     )
                     if verbose:
@@ -756,6 +768,7 @@ def run_check(
 
             club_seen[event_id] = {
                 "title": event.get("title", ""),
+                "url": join_url,
                 "first_seen": now_utc.isoformat(),
                 "upcoming_occurrences": event.get("upcoming_occurrences") or [],
             }
